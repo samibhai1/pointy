@@ -63,18 +63,11 @@
   .ca button{flex-shrink:0;border:0;border-left:var(--line) solid var(--ink);background:var(--sky);font:700 .9rem "Space Grotesk";padding:0 18px;cursor:pointer}
   .ca button:hover{background:var(--grape-lite)}
   /* ====== LAUNCH COUNTDOWN ====== */
-  .launch{margin-top:26px;max-width:560px}
-  @media (max-width:900px){.launch,.live-badge{margin-inline:auto}.launch .lbl{justify-content:center}.clock{gap:8px}}
+  .launch{margin-top:26px;max-width:560px;margin-bottom:-14px}
+  @media (max-width:900px){.launch,.live-badge{margin-inline:auto}.launch .lbl{justify-content:center}}
   .launch .lbl{font-family:"Bowlby One";font-size:1.15rem;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px}
   .launch .lbl .dot{width:12px;height:12px;border-radius:50%;background:#ff3b5c;border:2px solid var(--ink);animation:blink 1s steps(2) infinite}
   @keyframes blink{50%{opacity:.25}}
-  .clock{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .clock div{background:var(--paper);border:var(--line) solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink);padding:12px 6px 10px;text-align:center}
-  .clock div:nth-child(even){background:var(--sky)}
-  .clock b{display:block;font-family:"Bowlby One";font-size:clamp(2rem,5vw,3.2rem);line-height:1;font-variant-numeric:tabular-nums}
-  .clock b.tick{animation:tick .35s ease-out}
-  @keyframes tick{0%{transform:translateY(-8px) scale(1.1)}100%{transform:none}}
-  .clock small{display:block;margin-top:6px;font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
   .ca.locked code{filter:blur(5px);user-select:none}
   .ca.locked button{opacity:.5;cursor:not-allowed}
   .ca.reveal-pop{animation:pop .8s cubic-bezier(.3,1.7,.5,1)}
@@ -241,11 +234,7 @@
     .hero p.lead{font-size:.98rem;line-height:1.45}
     .launch{margin-top:18px}
     .launch .lbl{font-size:.95rem;margin-bottom:8px}
-    .clock{gap:7px}
-    .clock div{padding:9px 2px 8px;border-radius:11px;box-shadow:3px 3px 0 var(--ink)}
-    .clock b{font-size:1.9rem}
-    .clock small{font-size:.6rem;letter-spacing:.1em}
-    .ca span.lbl{display:none}
+            .ca span.lbl{display:none}
     .ca code{font-size:.78rem;padding:14px 12px}
     .ca button{padding:0 14px}
     .hero .ctas{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px !important}
@@ -349,13 +338,7 @@
       <div class="sub">Only knows one direction.</div>
       <p class="lead">Born with an arrow for a head, cool shades, and purple kicks. Pointy can't look down — physically. So neither does the chart.</p>
       <div class="launch" id="launch">
-        <div class="lbl"><span class="dot"></span><span id="launch-title">CA drops in</span></div>
-        <div class="clock">
-          <div><b id="cd-d">00</b><small>Days</small></div>
-          <div><b id="cd-h">00</b><small>Hours</small></div>
-          <div><b id="cd-m">00</b><small>Mins</small></div>
-          <div><b id="cd-s">00</b><small>Secs</small></div>
-        </div>
+        <div class="lbl"><span class="dot"></span><span>CA drops at launch</span></div>
       </div>
       <div class="live-badge">We're live ↑</div>
       <div class="ca locked" id="ca-box">
@@ -504,20 +487,17 @@
 </footer>
 
 <div class="mbar" id="mbar">
-  <div class="txt"><span id="mbar-l">CA drops in</span><b id="mbar-v">--:--:--</b></div>
-  <a class="btn" id="mbar-btn" href="#top">Countdown ↑</a>
+  <div class="txt"><span id="mbar-l">$POINTY</span><b id="mbar-v">CA drops at launch</b></div>
+  <a class="btn" id="mbar-btn" href="#buy">How to buy</a>
 </div>
 
 <div class="toast" id="toast">Copied ↑</div>
 
 <script>
   /* =====================================================
-     EDIT HERE — launch time, contract address, links
+     EDIT HERE — contract address, links
      ===================================================== */
   const CONFIG = {
-    // Launch time. "+03:30" = Tehran time. Example: Nov 1, 2026, 20:00 Tehran
-    launchAt: "2026-11-01T20:00:00+03:30",
-
     // Token mint address. Leave "" until launch. When you paste it here and
     // re-upload, open pages pick it up on their own within ~20 seconds.
     ca: "",
@@ -532,11 +512,9 @@
   };
 
   /* Rehearsal: open the page with ?test=10 at the end of the address
-     to run a fake launch 10 seconds from now (nothing real is shown). */
+     to see a fake CA reveal 10 seconds later (only on your screen). */
   const testSecs = Number(new URLSearchParams(location.search).get("test"));
   const TEST = testSecs > 0;
-  const launchTime = TEST ? Date.now() + testSecs * 1000 : new Date(CONFIG.launchAt).getTime();
-  if (TEST) CONFIG.ca = CONFIG.ca || "PNTYtest1111111111111111111111111111111111";
 
   const $ = id => document.getElementById(id);
   const caBox = $("ca-box"), caEl = $("ca");
@@ -562,35 +540,8 @@
     navigator.clipboard.writeText(CONFIG.ca).then(()=>flash("Copied ↑")).catch(()=>flash("Copy failed"));
   });
 
-  // ---- countdown ----
-  const pad = n => String(n).padStart(2,"0");
-  const last = {};
-  function setNum(id, val){
-    if (last[id] === val) return;
-    last[id] = val;
-    const el = $(id); el.textContent = val;
-    el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
-  }
-  function tick(){
-    const left = Math.max(0, launchTime - Date.now());
-    const s = Math.floor(left/1000);
-    setNum("cd-d", pad(Math.floor(s/86400)));
-    setNum("cd-h", pad(Math.floor(s%86400/3600)));
-    setNum("cd-m", pad(Math.floor(s%3600/60)));
-    setNum("cd-s", pad(s%60));
-    if (!revealed) $("mbar-v").textContent = (s>=86400 ? Math.floor(s/86400)+"d " : "") + pad(Math.floor(s%86400/3600))+":"+pad(Math.floor(s%3600/60))+":"+pad(s%60);
-    if (left <= 0) {
-      clearInterval(timer);
-      if (CONFIG.ca) reveal(true);
-      else waitForCA();
-    }
-  }
-
-  // Launch time passed but no CA yet: keep checking the live page for it
+  // No CA yet: keep checking the live page, so it appears without a refresh
   function waitForCA(){
-    $("launch-title").textContent = "Launching… CA any second";
-    $("mbar-l").textContent = "Launching…"; $("mbar-v").textContent = "CA any second";
-    if (polling) return;
     polling = setInterval(async () => {
       try {
         const r = await fetch(location.pathname + "?v=" + Date.now(), {cache:"no-store"});
@@ -636,11 +587,15 @@
     }
   }
 
-  // Page opened after launch with CA already set: just show it, no fireworks
-  if (launchTime <= Date.now() && CONFIG.ca) reveal(false);
-  const timer = setInterval(tick, 250); tick();
+  if (TEST) {
+    setTimeout(() => { CONFIG.ca = CONFIG.ca || "PNTYtest1111111111111111111111111111111111"; reveal(true); }, testSecs*1000);
+  } else if (CONFIG.ca) {
+    reveal(false);           // CA already set: show it straight away
+  } else if (location.protocol.startsWith("http")) {
+    waitForCA();
+  }
 
-  // mobile bottom bar: appears once the hero countdown scrolls out of view
+  // mobile bottom bar: appears once the hero CA box scrolls out of view
   new IntersectionObserver(([e]) => $("mbar").classList.toggle("show", !e.isIntersecting && e.boundingClientRect.top < 0))
     .observe($("ca-box"));
 
